@@ -21,7 +21,14 @@ public sealed class Worker
 }
 
 public sealed record TraceEvent(int Step, int Worker, string Action, string Before,
-    string After, string Observation, bool? CasSucceeded, string[] Violations);
+    string After, string Observation, bool? CasSucceeded, string[] Violations,
+    StateSnapshot BeforeState, StateSnapshot AfterState);
+
+public sealed record NodeLink(int Node, int? Next);
+public sealed record WorkerSnapshot(int Operation, int Phase, int? CachedHead, string CachedVersion,
+    int? CachedNext, int? ReinsertNode, int[] Owned);
+public sealed record StateSnapshot(int? Head, string Version, NodeLink[] Nodes, int[] Reachable,
+    int[] Reference, WorkerSnapshot[] Workers);
 
 public sealed class Simulation
 {
@@ -63,6 +70,12 @@ public sealed class Simulation
 
     public string Stack() => string.Join(" → ", Reachable().Select(id => Name(id)).Append("null"));
 
+    public StateSnapshot Snapshot() => new(Head, Version.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        Next.OrderBy(p => p.Key).Select(p => new NodeLink(p.Key, p.Value)).ToArray(),
+        Reachable().ToArray(), Reference.ToArray(), Workers.Select(w => new WorkerSnapshot(w.Operation,
+            w.Phase, w.CachedHead, w.CachedVersion.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            w.CachedNext, w.ReinsertNode, w.Owned.Order().ToArray())).ToArray());
+
     public string[] Check()
     {
         List<string> errors = [];
@@ -92,6 +105,7 @@ public sealed class Simulation
         var w = Workers[worker];
         bool push = worker == 1 && w.Operation == 2;
         string before = Stack();
+        var beforeState = Snapshot();
         var previousVersion = Version;
         var previousHead = Head;
         var previousLinks = Next.ToArray();
@@ -154,7 +168,7 @@ public sealed class Simulation
         List<string> violations = [.. Check()];
         if (Version != previousVersion + (cas == true ? 1 : 0)) violations.Add("Incorrect head version transition.");
         if (cas == false && (Head != previousHead || !Next.SequenceEqual(previousLinks))) violations.Add("Failed CAS changed shared state.");
-        var entry = new TraceEvent(Trace.Count + 1, worker + 1, action, before, Stack(), observation, cas, violations.ToArray());
+        var entry = new TraceEvent(Trace.Count + 1, worker + 1, action, before, Stack(), observation, cas, violations.ToArray(), beforeState, Snapshot());
         Trace.Add(entry);
         return entry;
     }

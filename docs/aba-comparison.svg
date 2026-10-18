@@ -1,0 +1,190 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="0 0 1560 1600" width="1560" height="1600" role="img" aria-labelledby="title description" xmlns="http://www.w3.org/2000/svg">
+  <title id="title">ABA: pointer-only versus tagged CAS</title>
+  <desc id="description">Two worker timelines with stack snapshots after every atomic step. Pointer-only CAS resurrects an owned node; tagged CAS rejects the stale observation and retries.</desc>
+  <rect width="100%" height="100%" fill="#101827" />
+  <g transform="translate(0,0)">
+    <text x="28" y="40" font-family="Consolas, monospace" font-size="24" fill="#dce6f5">POINTER-ONLY CAS</text>
+    <text x="28" y="68" font-family="Consolas, monospace" font-size="14" fill="#dce6f5">Initial stack: A → B → C → null | head (A, 0)</text>
+    <text x="50" y="108" font-family="Consolas, monospace" font-size="14" fill="#dce6f5">Worker 1</text>
+    <text x="280" y="108" font-family="Consolas, monospace" font-size="14" fill="#dce6f5">Worker 2</text>
+    <text x="510" y="108" font-family="Consolas, monospace" font-size="14" fill="#dce6f5">Stack / head version</text>
+    <line x1="120" x2="120" y1="120" y2="1490" stroke="#34465f" />
+    <line x1="350" x2="350" y1="120" y2="1490" stroke="#34465f" />
+    <rect x="28" y="135" width="200" height="28" rx="5" fill="#203149" />
+    <text x="38" y="154" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">01  ReadHead</text>
+    <text x="510" y="154" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">A → B → C → null</text>
+    <text x="510" y="173" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (A, 0)</text>
+    <text x="28" y="191" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">observed (A, 0)</text>
+    <text x="28" y="209" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns []</text>
+    <rect x="28" y="225" width="200" height="28" rx="5" fill="#203149" />
+    <text x="38" y="244" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">02  ReadNext</text>
+    <text x="510" y="244" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">A → B → C → null</text>
+    <text x="510" y="263" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (A, 0)</text>
+    <text x="28" y="281" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">cached next = B</text>
+    <text x="28" y="299" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns []</text>
+    <rect x="258" y="315" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="334" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">03  ReadHead</text>
+    <text x="510" y="334" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">A → B → C → null</text>
+    <text x="510" y="353" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (A, 0)</text>
+    <text x="28" y="371" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">observed (A, 0)</text>
+    <text x="28" y="389" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns []</text>
+    <rect x="258" y="405" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="424" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">04  ReadNext</text>
+    <text x="510" y="424" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">A → B → C → null</text>
+    <text x="510" y="443" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (A, 0)</text>
+    <text x="28" y="461" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">cached next = B</text>
+    <text x="28" y="479" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns []</text>
+    <rect x="258" y="495" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="514" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">05  Pop CAS</text>
+    <text x="510" y="514" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">B → C → null</text>
+    <text x="510" y="533" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (B, 1)</text>
+    <text x="28" y="551" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">expected (A, 0), actual (A, 0), desired B: success</text>
+    <text x="28" y="569" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns [A]</text>
+    <rect x="258" y="585" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="604" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">06  ReadHead</text>
+    <text x="510" y="604" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">B → C → null</text>
+    <text x="510" y="623" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (B, 1)</text>
+    <text x="28" y="641" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">observed (B, 1)</text>
+    <text x="28" y="659" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns [A]</text>
+    <rect x="258" y="675" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="694" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">07  ReadNext</text>
+    <text x="510" y="694" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">B → C → null</text>
+    <text x="510" y="713" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (B, 1)</text>
+    <text x="28" y="731" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">cached next = C</text>
+    <text x="28" y="749" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns [A]</text>
+    <rect x="258" y="765" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="784" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">08  Pop CAS</text>
+    <text x="510" y="784" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">C → null</text>
+    <text x="510" y="803" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (C, 2)</text>
+    <text x="28" y="821" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">expected (B, 1), actual (B, 1), desired C: success</text>
+    <text x="28" y="839" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns [A,B]</text>
+    <rect x="258" y="855" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="874" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">09  ReadHead</text>
+    <text x="510" y="874" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">C → null</text>
+    <text x="510" y="893" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (C, 2)</text>
+    <text x="28" y="911" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">observed (C, 2)</text>
+    <text x="28" y="929" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns [A,B]</text>
+    <rect x="258" y="945" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="964" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">10  WriteNext</text>
+    <text x="510" y="964" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">C → null</text>
+    <text x="510" y="983" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (C, 2)</text>
+    <text x="28" y="1001" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">A.Next = C</text>
+    <text x="28" y="1019" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns [A,B]</text>
+    <rect x="258" y="1035" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="1054" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">11  Push CAS</text>
+    <text x="510" y="1054" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">A → C → null</text>
+    <text x="510" y="1073" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (A, 3)</text>
+    <text x="28" y="1091" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">expected (C, 2), actual (C, 2), desired A: success</text>
+    <text x="28" y="1109" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns [B]</text>
+    <rect x="28" y="1125" width="200" height="28" rx="5" fill="#203149" />
+    <text x="38" y="1144" font-family="Consolas, monospace" font-size="14" fill="#fb7185">12  Pop CAS</text>
+    <text x="510" y="1144" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">B → C → null</text>
+    <text x="510" y="1163" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (B, 4)</text>
+    <text x="28" y="1181" font-family="Consolas, monospace" font-size="11" fill="#fb7185">expected (A, 0), actual (A, 3), desired B: success</text>
+    <text x="28" y="1199" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns [A]; W2 owns [B]</text>
+    <text x="28" y="1530" font-family="Consolas, monospace" font-size="15" fill="#fb7185">INVALID: B is reachable and owned by Worker 2.</text>
+    <text x="28" y="1560" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">CAS: 4 attempts / 4 success / 0 failure</text>
+  </g>
+  <g transform="translate(780,0)">
+    <text x="28" y="40" font-family="Consolas, monospace" font-size="24" fill="#dce6f5">TAGGED CAS</text>
+    <text x="28" y="68" font-family="Consolas, monospace" font-size="14" fill="#dce6f5">Initial stack: A → B → C → null | head (A, 0)</text>
+    <text x="50" y="108" font-family="Consolas, monospace" font-size="14" fill="#dce6f5">Worker 1</text>
+    <text x="280" y="108" font-family="Consolas, monospace" font-size="14" fill="#dce6f5">Worker 2</text>
+    <text x="510" y="108" font-family="Consolas, monospace" font-size="14" fill="#dce6f5">Stack / head version</text>
+    <line x1="120" x2="120" y1="120" y2="1490" stroke="#34465f" />
+    <line x1="350" x2="350" y1="120" y2="1490" stroke="#34465f" />
+    <rect x="28" y="135" width="200" height="28" rx="5" fill="#203149" />
+    <text x="38" y="154" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">01  ReadHead</text>
+    <text x="510" y="154" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">A → B → C → null</text>
+    <text x="510" y="173" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (A, 0)</text>
+    <text x="28" y="191" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">observed (A, 0)</text>
+    <text x="28" y="209" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns []</text>
+    <rect x="28" y="225" width="200" height="28" rx="5" fill="#203149" />
+    <text x="38" y="244" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">02  ReadNext</text>
+    <text x="510" y="244" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">A → B → C → null</text>
+    <text x="510" y="263" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (A, 0)</text>
+    <text x="28" y="281" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">cached next = B</text>
+    <text x="28" y="299" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns []</text>
+    <rect x="258" y="315" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="334" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">03  ReadHead</text>
+    <text x="510" y="334" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">A → B → C → null</text>
+    <text x="510" y="353" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (A, 0)</text>
+    <text x="28" y="371" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">observed (A, 0)</text>
+    <text x="28" y="389" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns []</text>
+    <rect x="258" y="405" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="424" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">04  ReadNext</text>
+    <text x="510" y="424" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">A → B → C → null</text>
+    <text x="510" y="443" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (A, 0)</text>
+    <text x="28" y="461" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">cached next = B</text>
+    <text x="28" y="479" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns []</text>
+    <rect x="258" y="495" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="514" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">05  Pop CAS</text>
+    <text x="510" y="514" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">B → C → null</text>
+    <text x="510" y="533" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (B, 1)</text>
+    <text x="28" y="551" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">expected (A, 0), actual (A, 0), desired B: success</text>
+    <text x="28" y="569" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns [A]</text>
+    <rect x="258" y="585" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="604" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">06  ReadHead</text>
+    <text x="510" y="604" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">B → C → null</text>
+    <text x="510" y="623" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (B, 1)</text>
+    <text x="28" y="641" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">observed (B, 1)</text>
+    <text x="28" y="659" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns [A]</text>
+    <rect x="258" y="675" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="694" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">07  ReadNext</text>
+    <text x="510" y="694" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">B → C → null</text>
+    <text x="510" y="713" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (B, 1)</text>
+    <text x="28" y="731" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">cached next = C</text>
+    <text x="28" y="749" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns [A]</text>
+    <rect x="258" y="765" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="784" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">08  Pop CAS</text>
+    <text x="510" y="784" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">C → null</text>
+    <text x="510" y="803" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (C, 2)</text>
+    <text x="28" y="821" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">expected (B, 1), actual (B, 1), desired C: success</text>
+    <text x="28" y="839" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns [A,B]</text>
+    <rect x="258" y="855" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="874" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">09  ReadHead</text>
+    <text x="510" y="874" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">C → null</text>
+    <text x="510" y="893" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (C, 2)</text>
+    <text x="28" y="911" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">observed (C, 2)</text>
+    <text x="28" y="929" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns [A,B]</text>
+    <rect x="258" y="945" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="964" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">10  WriteNext</text>
+    <text x="510" y="964" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">C → null</text>
+    <text x="510" y="983" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (C, 2)</text>
+    <text x="28" y="1001" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">A.Next = C</text>
+    <text x="28" y="1019" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns [A,B]</text>
+    <rect x="258" y="1035" width="200" height="28" rx="5" fill="#203149" />
+    <text x="268" y="1054" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">11  Push CAS</text>
+    <text x="510" y="1054" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">A → C → null</text>
+    <text x="510" y="1073" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (A, 3)</text>
+    <text x="28" y="1091" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">expected (C, 2), actual (C, 2), desired A: success</text>
+    <text x="28" y="1109" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns [B]</text>
+    <rect x="28" y="1125" width="200" height="28" rx="5" fill="#203149" />
+    <text x="38" y="1144" font-family="Consolas, monospace" font-size="14" fill="#facc15">12  Pop CAS</text>
+    <text x="510" y="1144" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">A → C → null</text>
+    <text x="510" y="1163" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (A, 3)</text>
+    <text x="28" y="1181" font-family="Consolas, monospace" font-size="11" fill="#facc15">expected (A, 0), actual (A, 3), desired B: failure</text>
+    <text x="28" y="1199" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns [B]</text>
+    <rect x="28" y="1215" width="200" height="28" rx="5" fill="#203149" />
+    <text x="38" y="1234" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">13  ReadHead</text>
+    <text x="510" y="1234" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">A → C → null</text>
+    <text x="510" y="1253" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (A, 3)</text>
+    <text x="28" y="1271" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">observed (A, 3)</text>
+    <text x="28" y="1289" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns [B]</text>
+    <rect x="28" y="1305" width="200" height="28" rx="5" fill="#203149" />
+    <text x="38" y="1324" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">14  ReadNext</text>
+    <text x="510" y="1324" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">A → C → null</text>
+    <text x="510" y="1343" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (A, 3)</text>
+    <text x="28" y="1361" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">cached next = C</text>
+    <text x="28" y="1379" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns []; W2 owns [B]</text>
+    <rect x="28" y="1395" width="200" height="28" rx="5" fill="#203149" />
+    <text x="38" y="1414" font-family="Consolas, monospace" font-size="14" fill="#65dbbc">15  Pop CAS</text>
+    <text x="510" y="1414" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">C → null</text>
+    <text x="510" y="1433" font-family="Consolas, monospace" font-size="12" fill="#dce6f5">head (C, 4)</text>
+    <text x="28" y="1451" font-family="Consolas, monospace" font-size="11" fill="#65dbbc">expected (A, 3), actual (A, 3), desired C: success</text>
+    <text x="28" y="1469" font-family="Consolas, monospace" font-size="11" fill="#a4b4cc">W1 owns [A]; W2 owns [B]</text>
+    <text x="28" y="1530" font-family="Consolas, monospace" font-size="15" fill="#65dbbc">VALID: stale CAS rejected; retry removes A.</text>
+    <text x="28" y="1560" font-family="Consolas, monospace" font-size="13" fill="#dce6f5">CAS: 5 attempts / 4 success / 1 failure</text>
+  </g>
+</svg>

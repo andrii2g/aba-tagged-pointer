@@ -26,6 +26,10 @@ public static class Verification
         Require(tagged.Trace[11].CasSucceeded == false, "Tagged stale CAS must fail.");
         Require(tagged.Attempts == 5 && tagged.Successes == 4 && tagged.Failures == 1, "Tagged CAS metrics must include retry.");
         Require(tagged.Version == 4 && tagged.Reachable().SequenceEqual(new[] { 2 }), "Tagged result must contain only C at version 4.");
+        Require(tagged.Trace[0].AfterState.Nodes[0].Next == 1 && tagged.Trace[9].AfterState.Nodes[0].Next == 2,
+            "Historical snapshots must preserve the changed A.Next link.");
+        Require(tagged.Trace[11].BeforeState.Version == tagged.Trace[11].AfterState.Version &&
+            tagged.Trace[11].BeforeState.Head == tagged.Trace[11].AfterState.Head, "Failed CAS snapshot must preserve the head pair.");
         var copy = initial.Copy();
         copy.Next[0] = null;
         copy.Workers[0].Owned.Add(2);
@@ -68,6 +72,9 @@ public static class Verification
                 "DFS counts must match independent fixed-word enumeration.");
             var budgeted = Exploration.Run(strategy, maxTransitions: 1);
             Require(!budgeted.ExhaustedBoundedTree && budgeted.Transitions == 1, "Budget must report unexplored branches.");
+            var shallow = Exploration.Run(strategy, maxSteps: 1);
+            Require(shallow.ExhaustedBoundedTree && !shallow.AllExecutionsTerminated && shallow.DepthLimitedPrefixes == 2,
+                "Exhausting a shallow bound must not imply completed executions.");
             Console.WriteLine($"PASS: {strategy}: {explored.CompletedSchedules} complete, {explored.InvalidSchedules} invalid, {explored.Transitions} transitions; independent enumeration agrees.");
         }
         Console.WriteLine("PASS: initial state, canonical ABA, ownership violation, sequential execution, tagged rejection and retry.");
