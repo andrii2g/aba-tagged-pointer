@@ -21,6 +21,11 @@ public static class Verification
         while (sequential.Enabled(1)) sequential.Step(1);
         while (sequential.Enabled(0)) sequential.Step(0);
         Require(!sequential.Invalid && sequential.Complete, "Sequential execution must be valid.");
-        Console.WriteLine("PASS: initial state, canonical ABA, ownership violation, sequential execution.");
+        var tagged = Simulation.Demo(CasStrategy.Tagged);
+        Require(!tagged.Invalid && tagged.Complete, "Tagged retry must complete correctly.");
+        Require(tagged.Trace[11].CasSucceeded == false, "Tagged stale CAS must fail.");
+        Require(tagged.Attempts == 5 && tagged.Successes == 4 && tagged.Failures == 1, "Tagged CAS metrics must include retry.");
+        Require(tagged.Version == 4 && tagged.Reachable().SequenceEqual(new[] { 2 }), "Tagged result must contain only C at version 4.");
+        Console.WriteLine("PASS: initial state, canonical ABA, ownership violation, sequential execution, tagged rejection and retry.");
     }
 }

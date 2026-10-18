@@ -1,16 +1,21 @@
+using System.Numerics;
+
 namespace AbaTaggedPointer;
+
+public enum CasStrategy { PointerOnly, Tagged }
 
 public sealed class Worker
 {
     public int Operation { get; set; }
     public int Phase { get; set; }
+    public BigInteger CachedVersion { get; set; }
     public int? CachedHead { get; set; }
     public int? CachedNext { get; set; }
     public int? ReinsertNode { get; set; }
     public HashSet<int> Owned { get; set; } = [];
     public Worker Copy() => new()
     {
-        Operation = Operation, Phase = Phase, CachedHead = CachedHead,
+        Operation = Operation, Phase = Phase, CachedVersion = CachedVersion, CachedHead = CachedHead,
         CachedNext = CachedNext, ReinsertNode = ReinsertNode, Owned = [.. Owned]
     };
 }
@@ -20,6 +25,8 @@ public sealed record TraceEvent(int Step, int Worker, string Action, string Befo
 
 public sealed class Simulation
 {
+    public CasStrategy Strategy { get; init; }
+    public BigInteger Version { get; private set; }
     public int? Head { get; private set; } = 0;
     public Dictionary<int, int?> Next { get; private set; } = new() { [0] = 1, [1] = 2, [2] = null };
     public List<int> Reference { get; private set; } = [0, 1, 2];
@@ -37,7 +44,7 @@ public sealed class Simulation
 
     public Simulation Copy() => new()
     {
-        Head = Head, Next = new(Next), Reference = [.. Reference],
+        Strategy = Strategy, Version = Version, Head = Head, Next = new(Next), Reference = [.. Reference],
         Workers = Workers.Select(w => w.Copy()).ToArray(), Trace = [.. Trace],
         Attempts = Attempts, Successes = Successes
     };
@@ -85,14 +92,18 @@ public sealed class Simulation
         var w = Workers[worker];
         bool push = worker == 1 && w.Operation == 2;
         string before = Stack();
+        var previousVersion = Version;
+        var previousHead = Head;
+        var previousLinks = Next.ToArray();
         string action;
         string observation;
         bool? cas = null;
         if (w.Phase == 0)
         {
             w.CachedHead = Head;
+            w.CachedVersion = Version;
             action = "ReadHead";
-            observation = $"observed {Name(Head)}";
+            observation = $"observed ({Name(Head)}, {Version})";
             if (!push && Head is null) w.Operation++;
             else w.Phase = 1;
         }
@@ -116,13 +127,14 @@ public sealed class Simulation
         else
         {
             Attempts++;
-            cas = Head == w.CachedHead;
+            cas = Head == w.CachedHead && (Strategy == CasStrategy.PointerOnly || Version == w.CachedVersion);
             action = push ? "Push CAS" : "Pop CAS";
             int? desired = push ? w.ReinsertNode : w.CachedNext;
-            observation = $"expected {Name(w.CachedHead)}, desired {Name(desired)}: {(cas.Value ? "success" : "failure")}";
+            observation = $"expected ({Name(w.CachedHead)}, {w.CachedVersion}), actual ({Name(Head)}, {Version}), desired {Name(desired)}: {(cas.Value ? "success" : "failure")}";
             if (cas.Value)
             {
                 Successes++;
+                Version++;
                 Head = desired;
                 if (push)
                 {
@@ -139,15 +151,19 @@ public sealed class Simulation
             }
             w.Phase = 0;
         }
-        var entry = new TraceEvent(Trace.Count + 1, worker + 1, action, before, Stack(), observation, cas, Check());
+        List<string> violations = [.. Check()];
+        if (Version != previousVersion + (cas == true ? 1 : 0)) violations.Add("Incorrect head version transition.");
+        if (cas == false && (Head != previousHead || !Next.SequenceEqual(previousLinks))) violations.Add("Failed CAS changed shared state.");
+        var entry = new TraceEvent(Trace.Count + 1, worker + 1, action, before, Stack(), observation, cas, violations.ToArray());
         Trace.Add(entry);
         return entry;
     }
 
-    public static Simulation Demo()
+    public static Simulation Demo(CasStrategy strategy = CasStrategy.PointerOnly)
     {
-        var state = new Simulation();
+        var state = new Simulation { Strategy = strategy };
         foreach (int worker in new[] { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 }) state.Step(worker);
+        while (!state.Invalid && state.Enabled(0)) state.Step(0);
         return state;
     }
 }
