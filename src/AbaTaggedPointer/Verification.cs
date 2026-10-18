@@ -26,6 +26,50 @@ public static class Verification
         Require(tagged.Trace[11].CasSucceeded == false, "Tagged stale CAS must fail.");
         Require(tagged.Attempts == 5 && tagged.Successes == 4 && tagged.Failures == 1, "Tagged CAS metrics must include retry.");
         Require(tagged.Version == 4 && tagged.Reachable().SequenceEqual(new[] { 2 }), "Tagged result must contain only C at version 4.");
+        var copy = initial.Copy();
+        copy.Next[0] = null;
+        copy.Workers[0].Owned.Add(2);
+        Require(initial.Next[0] == 1 && initial.Workers[0].Owned.Count == 0, "Search branches must be isolated.");
+        var cycle = new Simulation();
+        cycle.Next[2] = 0;
+        Require(cycle.Check().Any(e => e.Contains("Cycle")), "Cycle must be detected.");
+        var unknown = new Simulation();
+        unknown.Next[0] = 99;
+        Require(unknown.Check().Any(e => e.Contains("Unknown")), "Unknown node must be detected.");
+        foreach (var strategy in Enum.GetValues<CasStrategy>())
+        {
+            var explored = Exploration.Run(strategy);
+            Require(explored.AllExecutionsTerminated, "Default search must exhaust the complete execution tree.");
+            Require(explored.CompletedSchedules > 0, "Search must find completed schedules.");
+            Require(strategy == CasStrategy.PointerOnly ? explored.InvalidSchedules > 0 : explored.InvalidSchedules == 0,
+                "Only pointer-only exploration must expose invalid schedules.");
+            // Independently enumerate fixed worker-choice words. Stopped prefixes count once,
+            // by accepting only their all-zero padded representative.
+            const int bound = 12;
+            long complete = 0, invalid = 0, limited = 0;
+            for (int word = 0; word < (1 << bound); word++)
+            {
+                var replay = new Simulation { Strategy = strategy };
+                int step = 0;
+                bool admissible = true;
+                for (; step < bound && !replay.Complete && !replay.Invalid; step++)
+                {
+                    int worker = (word >> step) & 1;
+                    if (!replay.Enabled(worker)) { admissible = false; break; }
+                    replay.Step(worker);
+                }
+                if (!admissible || (word >> step) != 0) continue;
+                if (replay.Invalid) invalid++;
+                else if (replay.Complete) complete++;
+                else limited++;
+            }
+            var bounded = Exploration.Run(strategy, bound);
+            Require(bounded.CompletedSchedules == complete && bounded.InvalidSchedules == invalid && bounded.DepthLimitedPrefixes == limited,
+                "DFS counts must match independent fixed-word enumeration.");
+            var budgeted = Exploration.Run(strategy, maxTransitions: 1);
+            Require(!budgeted.ExhaustedBoundedTree && budgeted.Transitions == 1, "Budget must report unexplored branches.");
+            Console.WriteLine($"PASS: {strategy}: {explored.CompletedSchedules} complete, {explored.InvalidSchedules} invalid, {explored.Transitions} transitions; independent enumeration agrees.");
+        }
         Console.WriteLine("PASS: initial state, canonical ABA, ownership violation, sequential execution, tagged rejection and retry.");
     }
 }
